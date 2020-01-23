@@ -1,37 +1,62 @@
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL']='1' # Filter out info messages from tensorflowt
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from .network import create_fully_connected_model
+import torch
+from .controller import Controller
+from .network import FeedForwardActorCritic
 
-def gaussian_likelihood(x, mu, log_std):
+class PPO(Controller):
     """
-    Copied from https://github.com/openai/spinningup/blob/master/spinup/algos/ppo/core.py\
-
-    """
-    pre_sum = -0.5 * (((x-mu)/(tf.exp(log_std)+EPS))**2 + 2*log_std + np.log(2*np.pi))
-    return tf.reduce_sum(pre_sum, axis=1)
-
-class ppo():
-    """
-    Adapted from the TensorFlow 2.0 PPO implementation found at:
-    https://github.com/jw1401/PPO-Tensorflow-2.0/tree/master/algorithms/ppo
-
     """
 
-    def __init__(self, n_features, n_actions, hidden_layers=None,
-                       hidden_activation = 'relu',
-                       output_activation = 'linear'):
-        self.actor = create_fully_connected_model(n_features, n_actions, hidden_layers, hidden_activation, output_activation)
-        self.critic = create_fully_connected_model(n_features, n_actions, hidden_layers, hidden_activation, output_activation)
+    def __init__(self, device='cuda'):
+        super(PPO, self).__init__()
+        self.device = torch.device(device)
+        self.train_steps = 0
 
-    def run(self, x):
-        return self.actor.predict(x), self.critic.predict(x)
+        # These will be set when creating model
+        self.model = None
+        self.gamma = 0.99
+        self.eps = 0.2
+        self.optimizer = None
+        self.learning_rate = 1e-2
 
-    def get_action(self, obs, std=0):
-        mu, _ = self.run(obs)
-        mu += tf.random.normal(tf.shape(mu)) * std
-        mu = tf.clip_by_value(mu, -1, 1)
+    def create_model(self, n_features, n_actions, hidden_layers=[10, 10, 10], action_std=0.1,
+                     gamma=0.99, eps=0.2, learning_rate=1e-2,
+                     optimizer_type='adam'):
 
-        return mu
+        self.model = FeedForwardActorCritic(n_features, n_actions, hidden_layers,
+                                               self.device, action_std)
+        self.model.to(self.device)
+        self.model.eval()
+
+        self.train_steps = 0  # Initialize number of training steps to 0
+        self.gamma = gamma  # Assign invalue values
+        self.learning_rate = learning_rate
+        self.eps = eps
+
+        # Optimizer to be used
+        if optimizer_type == 'adagrad':
+            self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=learning_rate)
+        elif optimizer_type == 'adam':
+            self.optimizer = torch.optim.Adam(self.model.parameters(), lr=learning_rate)
+        elif optimizer_type == 'rmsprop':
+            self.optimizer = torch.optim.RMSprop(self.model.parameters(), lr=learning_rate)
+        elif optimizer_type == 'sgd':
+            self.optimizer = torch.optim.SGD(self.model.parameters(), lr=learning_rate)
+        else:
+            raise Exception('Unrecognized optimizer')
+
+        print(self.model.forward)
+
+        pass
+
+    def sample_action(self, state):
+        """
+
+        """
+
+        state = torch.tensor(state, dtype=torch.float32).to(self.device)
+
+        with torch.no_grad():
+            self.model.eval()
+            actions, logp = self.model.sample_action(state)
+
+        return actions, logp

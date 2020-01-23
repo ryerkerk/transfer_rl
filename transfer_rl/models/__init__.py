@@ -1,2 +1,4 @@
-from .network import create_fully_connected_model
-from .ppo import ppo
+from .network import FeedForwardActorCritic
+from .memory import Buffer
+from .controller import Controller
+from .ppo import PPO

@@ -1,29 +1,80 @@
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL']='1' # Filter out info messages from tensorflowt
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+import torch.nn as nn
+import torch
 
-def create_fully_connected_model(n_features, n_actions, hidden_layers=None,
-                                 hidden_activation = 'relu',
-                                 output_activation = 'linear'):
-    """
 
-    :param n_features: Number of input features to model
-    :param n_actions: Number of output actions
-    :param hidden_layers: Number of nodes in each hidden layer (default [10, 10, 10)
-                          Number of hidden layers is equal to length of list
-    :param hidden_activation:Activation function for hidden nodes (default 'relu')
-    :param output_activation: Activation function for output nodes (default 'linear')
-    :return:
-    """
-    if hidden_layers is None:       # Avoid mutable arguments
-        hidden_layers = [10, 10, 10]
+class FeedForwardActorCritic(nn.Module):
+    def __init__(self, num_inputs, num_outputs, hidden_nodes, device, std=0.1):
+        super(FeedForwardActorCritic, self).__init__()
+        self.device = device
 
-    model = Sequential()
-    model.add(Dense(units=hidden_layers[0], input_shape=(n_features,), activation=hidden_activation))
-    for h in hidden_layers[1:]:
-        model.add(Dense(units=h, activation=hidden_activation))
-    model.add(Dense(units=n_actions, activation=output_activation))
+        self.actor = nn.ModuleList()
+        self.actor.append(nn.Linear(num_inputs, hidden_nodes[0]))
+        self.actor.append(nn.ReLU())
+        for i in range(len(hidden_nodes) - 1):
+            self.actor.append(nn.Linear(hidden_nodes[i], hidden_nodes[i + 1]))
+            self.actor.append(nn.ReLU())
 
-    return model
+        self.actor.append(nn.Linear(hidden_nodes[-1], num_outputs))
+
+        self.critic = nn.ModuleList()
+        self.critic.append(nn.Linear(num_inputs, hidden_nodes[0]))
+        self.critic.append(nn.ReLU())
+        for i in range(len(hidden_nodes) - 1):
+            self.critic.append(nn.Linear(hidden_nodes[i], hidden_nodes[i + 1]))
+            self.critic.append(nn.ReLU())
+
+        self.critic.append(nn.Linear(hidden_nodes[-1], 1))
+
+        self.action_std = std
+        self.action_var = std * std
+
+    def get_action(self, state):
+        """
+        Get action.
+
+        """
+        # Run state through actor network
+        actions = state
+        for layer in self.actor:
+            actions = layer(actions)
+
+        return actions
+
+    def sample_action(self, state):
+        """
+        Get action, and then apply some variance to better explore policy search space
+        """
+        actions = self.get_action(state)
+        co_var_mat = torch.eye(actions.shape[1]).repeat(actions.shape[0], 1, 1) * self.action_var
+        dist = torch.distributions.MultivariateNormal(actions.cpu(), co_var_mat)
+        actions = dist.sample()
+        logp = dist.log_prob(actions)  # Log probability of this
+
+        return actions.detach(), logp.detach()
+
+    def get_value(self, state):
+        """
+        Get state value from critic
+        """
+
+        # Run state through actor network
+        values = state
+        for layer in self.critic:
+            values = layer(values)
+
+        return values
+
+    def get_logp_value_ent(self, state):
+        """
+        Used to evaluate previous states and actions
+        """
+        # Run state through actor network
+        actions = self.get_action(state)
+        values = self.get_value(state)
+
+        co_var_mat = torch.eye(actions.shape[1]).repeat(actions.shape[0], 1, 1) * self.action_var
+        dist = torch.distributions.MultivariateNormal(actions, co_var_mat)
+        logp = dist.log_prob(actions)   # Log probability of this
+        entropy = dist.entropy()
+
+        return logp, values, entropy
