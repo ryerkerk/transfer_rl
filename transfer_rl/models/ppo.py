@@ -61,7 +61,7 @@ class PPO(Controller):
         return actions, logp
 
     def train(self, mem):
-        batch_actions, batch_states, batch_logp, batch_rewards, batch_dones = mem.get()
+        batch_actions, batch_states, batch_logp, batch_rewards, batch_dones = mem.get_all()
 
         discounted_rewards = [0 for i in range(len(batch_rewards))]
         r = 0
