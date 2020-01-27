@@ -59,7 +59,6 @@ HULL_POLY =[
     (+34,-8), (-30,-8)
     ]
 LEG_DOWN = -8/SCALE
-LEG_W, LEG_H = 8/SCALE, 14/SCALE
 
 VIEWPORT_W = 600
 VIEWPORT_H = 400
@@ -71,6 +70,8 @@ TERRAIN_GRASS    = 10    # low long are grass spots, in steps
 TERRAIN_STARTPAD = 20    # in steps
 FRICTION = 2.5
 
+"""
+LEG_W, LEG_H = 8/SCALE, 34/SCALE
 HULL_FD = fixtureDef(
                 shape=polygonShape(vertices=[ (x/SCALE,y/SCALE) for x,y in HULL_POLY ]),
                 density=5.0,
@@ -92,6 +93,8 @@ LOWER_FD = fixtureDef(
                     restitution=0.0,
                     categoryBits=0x0020,
                     maskBits=0x001)
+                    
+"""
 
 class ContactDetector(contactListener):
     def __init__(self, env):
@@ -108,7 +111,7 @@ class ContactDetector(contactListener):
             if leg in [contact.fixtureA.body, contact.fixtureB.body]:
                 leg.ground_contact = False
 
-class CustomBipedalWalker(gym.Env, EzPickle):
+class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
     metadata = {
         'render.modes': ['human', 'rgb_array'],
         'video.frames_per_second' : FPS
@@ -116,7 +119,32 @@ class CustomBipedalWalker(gym.Env, EzPickle):
 
     hardcore = False
 
-    def __init__(self):
+    def __init__(self, leg_length=34):
+        print(leg_length)
+
+        self.LEG_W, self.LEG_H = 8 / SCALE, leg_length / SCALE
+        self.HULL_FD = fixtureDef(
+            shape=polygonShape(vertices=[(x / SCALE, y / SCALE) for x, y in HULL_POLY]),
+            density=5.0,
+            friction=0.1,
+            categoryBits=0x0020,
+            maskBits=0x001,  # collide only with ground
+            restitution=0.0)  # 0.99 bouncy
+
+        self.LEG_FD = fixtureDef(
+            shape=polygonShape(box=(self.LEG_W / 2, self.LEG_H / 2)),
+            density=1.0,
+            restitution=0.0,
+            categoryBits=0x0020,
+            maskBits=0x001)
+
+        self.LOWER_FD = fixtureDef(
+            shape=polygonShape(box=(0.8 * self.LEG_W / 2, self.LEG_H / 2)),
+            density=1.0,
+            restitution=0.0,
+            categoryBits=0x0020,
+            maskBits=0x001)
+
         EzPickle.__init__(self)
         self.seed()
         self.viewer = None
@@ -310,10 +338,10 @@ class CustomBipedalWalker(gym.Env, EzPickle):
         self._generate_clouds()
 
         init_x = TERRAIN_STEP*TERRAIN_STARTPAD/2
-        init_y = TERRAIN_HEIGHT+2*LEG_H
+        init_y = TERRAIN_HEIGHT+2*self.LEG_H
         self.hull = self.world.CreateDynamicBody(
             position = (init_x, init_y),
-            fixtures = HULL_FD
+            fixtures = self.HULL_FD
                 )
         self.hull.color1 = (0.5,0.4,0.9)
         self.hull.color2 = (0.3,0.3,0.5)
@@ -323,9 +351,9 @@ class CustomBipedalWalker(gym.Env, EzPickle):
         self.joints = []
         for i in [-1,+1]:
             leg = self.world.CreateDynamicBody(
-                position = (init_x, init_y - LEG_H/2 - LEG_DOWN),
+                position = (init_x, init_y - self.LEG_H/2 - LEG_DOWN),
                 angle = (i*0.05),
-                fixtures = LEG_FD
+                fixtures = self.LEG_FD
                 )
             leg.color1 = (0.6-i/10., 0.3-i/10., 0.5-i/10.)
             leg.color2 = (0.4-i/10., 0.2-i/10., 0.3-i/10.)
@@ -333,7 +361,7 @@ class CustomBipedalWalker(gym.Env, EzPickle):
                 bodyA=self.hull,
                 bodyB=leg,
                 localAnchorA=(0, LEG_DOWN),
-                localAnchorB=(0, LEG_H/2),
+                localAnchorB=(0, self.LEG_H/2),
                 enableMotor=True,
                 enableLimit=True,
                 maxMotorTorque=MOTORS_TORQUE,
@@ -345,17 +373,17 @@ class CustomBipedalWalker(gym.Env, EzPickle):
             self.joints.append(self.world.CreateJoint(rjd))
 
             lower = self.world.CreateDynamicBody(
-                position = (init_x, init_y - LEG_H*3/2 - LEG_DOWN),
+                position = (init_x, init_y - self.LEG_H*3/2 - LEG_DOWN),
                 angle = (i*0.05),
-                fixtures = LOWER_FD
+                fixtures = self.LOWER_FD
                 )
             lower.color1 = (0.6-i/10., 0.3-i/10., 0.5-i/10.)
             lower.color2 = (0.4-i/10., 0.2-i/10., 0.3-i/10.)
             rjd = revoluteJointDef(
                 bodyA=leg,
                 bodyB=lower,
-                localAnchorA=(0, -LEG_H/2),
-                localAnchorB=(0, LEG_H/2),
+                localAnchorA=(0, -self.LEG_H/2),
+                localAnchorB=(0, self.LEG_H/2),
                 enableMotor=True,
                 enableLimit=True,
                 maxMotorTorque=MOTORS_TORQUE,
@@ -507,12 +535,12 @@ class CustomBipedalWalker(gym.Env, EzPickle):
             self.viewer.close()
             self.viewer = None
 
-class BipedalWalkerHardcore(CustomBipedalWalker):
+class BipedalWalkerHardcore(BipedalWalkerCustomLegLength):
     hardcore = True
 
 if __name__=="__main__":
     # Heurisic: suboptimal, have no notion of balance.
-    env = CustomBipedalWalker()
+    env = BipedalWalkerCustomLegLength()
     env.reset()
     steps = 0
     total_reward = 0
