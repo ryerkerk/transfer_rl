@@ -8,6 +8,10 @@ __pycache__/
 .idea/
 
 # Local notes, data, and functions that need refactoring
+runs/
 logs/
 transfer_rl/Misc/
 local_files/
+results/
+trained_models/
+Misc/
