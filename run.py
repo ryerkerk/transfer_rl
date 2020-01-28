@@ -1,6 +1,6 @@
 import gym
 import transfer_rl.my_env
-from transfer_rl.models import PPO, Buffer
+from transfer_rl.models import PPO, Buffer, DDPG
 from transfer_rl.utils import parse_arg
 import torch
 import sys
@@ -17,20 +17,30 @@ if __name__ == "__main__":
     params = parse_arg()
     print(params)
 
+    env = gym.make(params['env'], leg_length=params['leg_length'])
+
     if params['model'] == 'ppo':
-        model = PPO()
+        model = PPO(device=device)
+        model.create_model(n_features=env.observation_space.shape[0], n_actions=env.action_space.shape[0],
+                           hidden_layers=params['hidden_layers'], action_std=params['action_std'],
+                           learning_rate=params['learning_rate'], gamma=params['gamma'],
+                           batch_size=params['batch_size'], train_steps=params['train_steps'],
+                           optimizer_type=params['optimizer'])
+        mem = Buffer()
+    elif params['model'] == 'ddpg':
+        model = ddpg(device=device)
+        model.create_model(n_features=env.observation_space.shape[0], n_actions=env.action_space.shape[0],
+                           hidden_layers=params['hidden_layers'], action_std=params['action_std'],
+                           action_std_decay=params['action_std_decay'],
+                           learning_rate=params['learning_rate'], gamma=params['gamma'],
+                           batch_size=params['batch_size'], train_steps=params['train_steps'],
+                           optimizer_type=params['optimizer'])
         mem = Buffer()
     else:
         sys.exit("Model type {} not recognized".format(params['model']))
 
-    env = gym.make(params['env'], leg_length=params['leg_length'])
-    model.create_model(n_features=env.observation_space.shape[0], n_actions=env.action_space.shape[0],
-                       hidden_layers=params['hidden_layers'], action_std=params['action_std'],
-                       learning_rate=params['learning_rate'], gamma=params['gamma'],
-                       train_steps=params['train_steps'], optimizer_type=params['optimizer'],
-                       device=device)
-
     if params['initial_model'] != 'none':
+        print("Loading {}".format('./trained_models/{}.pt'.format(params['initial_model'])))
         model.load_model('./trained_models/{}.pt'.format(params['initial_model']))
 
     total_steps = 0
@@ -55,9 +65,8 @@ if __name__ == "__main__":
             cur_reward += reward
 
             # Train once memory is larger enough. Don't train if rendering.
-            if (len(mem) >= params['batch_size']) and params['render']==False:
-                model.train(mem)
-                mem.reset()
+            if params['render'] == False:
+                model.check_train(mem)
 
             if done:
                 break

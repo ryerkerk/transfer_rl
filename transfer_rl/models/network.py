@@ -45,12 +45,12 @@ class FeedForwardActorCritic(nn.Module):
 
         return actions
 
-    def sample_action(self, state):
+    def sample_action(self, state, std):
         """
         Get action, and then apply some variance to better explore policy search space
         """
         actions_mean = self.get_action(state)
-        co_var_mat = torch.eye(actions_mean.shape[1]).repeat(actions_mean.shape[0], 1, 1) * self.action_var
+        co_var_mat = torch.eye(actions_mean.shape[1]).repeat(actions_mean.shape[0], 1, 1) * std * std
         dist = torch.distributions.MultivariateNormal(actions_mean, co_var_mat)
         actions = dist.sample()
         # d = actions-actions_mean
@@ -74,7 +74,7 @@ class FeedForwardActorCritic(nn.Module):
 
         return values
 
-    def get_logp_value_ent(self, state, actions_prev):
+    def get_logp_value_ent(self, state, actions_prev, std):
         """
         Used to evaluate previous states and actions
 
@@ -84,7 +84,7 @@ class FeedForwardActorCritic(nn.Module):
         actions_cur_p = self.get_action(state) # Actions on current policy
         values = self.get_value(state)
 
-        co_var_mat = torch.eye(actions_cur_p.shape[1]).repeat(actions_cur_p.shape[0], 1, 1) * self.action_var
+        co_var_mat = torch.eye(actions_cur_p.shape[1]).repeat(actions_cur_p.shape[0], 1, 1) * std * std
         dist = torch.distributions.MultivariateNormal(actions_cur_p, co_var_mat)
 
         logp = dist.log_prob(actions_prev)   # Log probability of this

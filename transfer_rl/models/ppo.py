@@ -7,7 +7,7 @@ class PPO(Controller):
     """
     """
 
-    def __init__(self, device='cuda'):
+    def __init__(self, device='cpu'):
         super(PPO, self).__init__()
         self.device = torch.device(device)
         self.train_steps = 0
@@ -20,12 +20,12 @@ class PPO(Controller):
         self.learning_rate = 1e-2
         self.MSELoss = torch.nn.MSELoss()
         self.train_steps = 80
+        self.batch_size = 1000
 
     def create_model(self, n_features, n_actions, hidden_layers=[10, 10, 10], action_std=0.1,
-                     gamma=0.99, eps=0.2, learning_rate=1e-4, device = 'cuda', train_steps=80,
+                     gamma=0.99, eps=0.2, learning_rate=1e-4, train_steps=80, batch_size=1000,
                      optimizer_type='adam'):
 
-        self.device = device
         self.model = FeedForwardActorCritic(n_features, n_actions, hidden_layers,
                                                self.device, action_std)
         self.model.to(self.device)
@@ -34,6 +34,7 @@ class PPO(Controller):
         self.gamma = gamma
         self.learning_rate = learning_rate
         self.eps = eps
+        self.action_std = action_std
 
         # Optimizer to be used
         if optimizer_type == 'adagrad':
@@ -56,9 +57,14 @@ class PPO(Controller):
 
         """
         with torch.no_grad():
-            actions, logp = self.model.sample_action(state)
+            actions, logp = self.model.sample_action(state, self.action_std)
 
         return actions, logp
+
+    def check_train(self, mem):
+        if len(mem) >= self.batch_size:
+            self.train(mem)
+            mem.reset()
 
     def train(self, mem):
         batch_actions, batch_states, batch_logp, batch_rewards, batch_dones = mem.get_all()
@@ -79,7 +85,7 @@ class PPO(Controller):
         self.model.train()
 
         for _ in range(self.train_steps):
-            logp, values, entropy = self.model.get_logp_value_ent(batch_states, batch_actions)
+            logp, values, entropy = self.model.get_logp_value_ent(batch_states, batch_actions, self.action_std)
 
             ratios = torch.exp(logp - batch_logp.squeeze().detach())
 

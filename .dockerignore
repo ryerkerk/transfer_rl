@@ -12,6 +12,6 @@ logs/
 transfer_rl/Misc/
 local_files/
 results/
+runs/
 trained_models/
 Misc/
-runs/

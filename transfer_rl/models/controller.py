@@ -12,10 +12,7 @@ class Controller():
     def create_model(self, **kwargs):
         pass
 
-    def select_action(self, state):
-        pass
-
-    def get_input(self):
+    def sample_action(self, state):
         pass
 
     def train(self, memory, beta):
@@ -27,12 +24,5 @@ class Controller():
     def load_model(self, PATH):
         pass
 
-    def get_eps(self):
-        """
-        Calculate current eps based on number of elapsed training steps.
-        """
-        eps_start = 0.9
-        eps_end = self.eps_end
-        eps_decay = self.eps_decay
-
-        return eps_end + (eps_start - eps_end) * math.exp(-1. * self.train_steps / eps_decay)
+    def check_train(self, mem):
+        pass
