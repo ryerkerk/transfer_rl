@@ -20,7 +20,7 @@ if [ ! ${INITIAL_MODEL} == "none" ]; then
   aws s3 cp "s3://transfer-rl/trained_models/${MODEL_NAME}.pt" - > "./trained_models/${MODEL_NAME}.pt" || error_exit "Failed to download initial model from s3 bucket."
 fi
 
-python3 run.py \
+python3 -u run.py \
        --save_name=$SAVE_NAME \
        --env=$ENV \
        --leg_length=$LEG_LENGTH \
@@ -34,7 +34,7 @@ python3 run.py \
        --optimizer=$OPTIMIZER \
        --model=$MODEL \
        --action_std=$ACTION_STD \
-       --gamma=$GAMMA 2>&1 | tee "${SAVE_NAME}.txt"
+       --gamma=$GAMMA | tee "${SAVE_NAME}.txt"
 
 aws s3 cp "./results/${SAVE_NAME}.p" "s3://transfer-rl/results/${SAVE_NAME}.p" || error_exit "Failed to upload results to s3 bucket."
 aws s3 cp "./trained_models/${SAVE_NAME}.pt" "s3://transfer-rl/trained_models/${SAVE_NAME}.pt" || error_exit "Failed to upload results to s3 bucket."
@@ -42,3 +42,4 @@ aws s3 cp "./${SAVE_NAME}.txt" "s3://transfer-rl/logs/${SAVE_NAME}.txt" || error
 
 date
 echo "Finished"
+\
