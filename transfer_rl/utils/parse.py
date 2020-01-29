@@ -24,6 +24,7 @@ def parse_arg():
     parser.add_argument("--train_steps", type=int, default=80)
 
     parser.add_argument("--action_std", type=float, default=0.5)
+    parser.add_argument("--action_std_decay", type=float, default=0.999)
     parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--render", type=bool, default=False)
 

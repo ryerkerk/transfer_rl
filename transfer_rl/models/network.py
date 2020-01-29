@@ -49,6 +49,7 @@ class FeedForwardActorCritic(nn.Module):
         """
         Get action, and then apply some variance to better explore policy search space
         """
+
         actions_mean = self.get_action(state)
         co_var_mat = torch.eye(actions_mean.shape[1]).repeat(actions_mean.shape[0], 1, 1) * std * std
         dist = torch.distributions.MultivariateNormal(actions_mean, co_var_mat)

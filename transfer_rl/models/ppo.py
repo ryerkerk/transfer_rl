@@ -20,11 +20,11 @@ class PPO(Controller):
         self.learning_rate = 1e-2
         self.MSELoss = torch.nn.MSELoss()
         self.train_steps = 80
-        self.batch_size = 1000
+        self.batch_size = 10000
         self.action_std = 0.5
 
     def create_model(self, n_features, n_actions, hidden_layers=[10, 10, 10], action_std=0.1,
-                     gamma=0.99, eps=0.2, learning_rate=1e-4, train_steps=80, batch_size=1000,
+                     gamma=0.99, eps=0.2, learning_rate=1e-4, train_steps=80, batch_size=10000,
                      optimizer_type='adam'):
 
         self.model = FeedForwardActorCritic(n_features, n_actions, hidden_layers,
@@ -36,6 +36,7 @@ class PPO(Controller):
         self.learning_rate = learning_rate
         self.eps = eps
         self.action_std = action_std
+        self.batch_size = batch_size
 
         # Optimizer to be used
         if optimizer_type == 'adagrad':
