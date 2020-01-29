@@ -5,8 +5,10 @@ def parse_arg():
         description="Desc test")
 
     # Hyper-parameters
-    parser.add_argument("--save_name", type=str, required=True)
+    parser.add_argument("--save_name", type=str, default="no_name")
     parser.add_argument("--env", type=str, default="Bipedal_Custom_Leg_Length-v0")
+    parser.add_argument("--knee_contact_penalty", type=float, default=0.05)
+    parser.add_argument("--terrain_length_scale", type=int, default=2)
     parser.add_argument("--leg_length", type=int, default=34)
     parser.add_argument("--initial_model", type=str, default='none')
 

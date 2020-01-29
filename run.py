@@ -17,8 +17,9 @@ if __name__ == "__main__":
     params = parse_arg()
     print(params)
 
-    env = gym.make(params['env'], leg_length=params['leg_length'])
-
+    env = gym.make(params['env'], leg_length=params['leg_length'], terrain_length_scale=params['terrain_length_scale'],
+                   knee_contact_penalty=params['knee_contact_penalty'])
+    params['render'] = True
     if params['model'] == 'ppo':
         model = PPO(device=device)
         model.create_model(n_features=env.observation_space.shape[0], n_actions=env.action_space.shape[0],
@@ -77,7 +78,7 @@ if __name__ == "__main__":
 
         results.append([total_steps, cur_steps, cur_reward])
 
-        if cur_episode % 20 == 0:
+        if cur_episode % 1 == 0:
             print("{}, {}, {}".format(cur_episode, batch_reward // 20, batch_steps // 20))
             batch_reward = 0
             batch_steps = 0
