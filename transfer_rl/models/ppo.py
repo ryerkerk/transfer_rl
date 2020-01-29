@@ -21,6 +21,7 @@ class PPO(Controller):
         self.MSELoss = torch.nn.MSELoss()
         self.train_steps = 80
         self.batch_size = 1000
+        self.action_std = 0.5
 
     def create_model(self, n_features, n_actions, hidden_layers=[10, 10, 10], action_std=0.1,
                      gamma=0.99, eps=0.2, learning_rate=1e-4, train_steps=80, batch_size=1000,

@@ -100,16 +100,14 @@ class ContactDetector(contactListener):
     def __init__(self, env):
         contactListener.__init__(self)
         self.env = env
-
     def BeginContact(self, contact):
-        if self.env.hull == contact.fixtureA.body or self.env.hull == contact.fixtureB.body:
+        if self.env.hull==contact.fixtureA.body or self.env.hull==contact.fixtureB.body:
             self.env.game_over = True
-        for leg in self.env.legs:
+        for leg in [self.env.legs[1], self.env.legs[3]]:
             if leg in [contact.fixtureA.body, contact.fixtureB.body]:
                 leg.ground_contact = True
-
     def EndContact(self, contact):
-        for leg in self.env.legs:
+        for leg in [self.env.legs[1], self.env.legs[3]]:
             if leg in [contact.fixtureA.body, contact.fixtureB.body]:
                 leg.ground_contact = False
 
@@ -122,10 +120,8 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
     hardcore = False
 
     def __init__(self, leg_length=34, terrain_length_scale=200, knee_contact_penalty=0):
-        self.terrain_length_scale = terrain_length_scale
-        self.knee_contact_penalty=knee_contact_penalty
         print(leg_length)
-
+        self.terrain_length_scale=terrain_length_scale
         self.LEG_W, self.LEG_H = 8 / SCALE, leg_length / SCALE
         self.HULL_FD = fixtureDef(
             shape=polygonShape(vertices=[(x / SCALE, y / SCALE) for x, y in HULL_POLY]),
@@ -148,14 +144,6 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
             restitution=0.0,
             categoryBits=0x0020,
             maskBits=0x001)
-
-        self.KNEE = fixtureDef(
-            shape=circleShape(radius=2),
-            density=0,
-            restitution=0,
-            categoryBits=0x0020,
-            maskBits=0x001
-        )
 
         EzPickle.__init__(self)
         self.seed()
@@ -216,7 +204,7 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
         self.terrain   = []
         self.terrain_x = []
         self.terrain_y = []
-        for i in range(TERRAIN_LENGTH*self.terrain_length_scale ):
+        for i in range(TERRAIN_LENGTH*self.terrain_length_scale):
             x = i*TERRAIN_STEP
             self.terrain_x.append(x)
 
@@ -303,7 +291,7 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
                     oneshot = True
 
         self.terrain_poly = []
-        for i in range(TERRAIN_LENGTH*self.terrain_length_scale -1):
+        for i in range(TERRAIN_LENGTH*self.terrain_length_scale-1):
             poly = [
                 (self.terrain_x[i],   self.terrain_y[i]),
                 (self.terrain_x[i+1], self.terrain_y[i+1])
@@ -361,7 +349,6 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
 
         self.legs = []
         self.joints = []
-        self.knees =[]
         for i in [-1,+1]:
             leg = self.world.CreateDynamicBody(
                 position = (init_x, init_y - self.LEG_H/2 - LEG_DOWN),
@@ -370,8 +357,6 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
                 )
             leg.color1 = (0.6-i/10., 0.3-i/10., 0.5-i/10.)
             leg.color2 = (0.4-i/10., 0.2-i/10., 0.3-i/10.)
-            leg.ground_contact=False
-            leg.knee_contact = False
             rjd = revoluteJointDef(
                 bodyA=self.hull,
                 bodyB=leg,
@@ -407,7 +392,6 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
                 upperAngle = -0.1,
                 )
             lower.ground_contact = False
-            lower.knee_contact = False
             self.legs.append(lower)
             self.joints.append(self.world.CreateJoint(rjd))
 
@@ -487,17 +471,12 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
         for a in action:
             reward -= 0.00035 * MOTORS_TORQUE * np.clip(np.abs(a), 0, 1)
             # normalized to about -50.0 using heuristic, more optimal agent should spend less
-        # print([self.legs[0].ground_contact, self.legs[1].ground_contact, self.legs[2].ground_contact, self.legs[3].ground_contact,self.legs[0].knee_contact, self.legs[1].knee_contact, self.legs[2].knee_contact, self.legs[3].knee_contact])
-        # print(len(self.legs[0].contacts))
-
-        # reward -= self.knee_contact_penalty if self.legs[0].ground_contact else 0.0
-        # reward -= self.knee_contact_penalty if self.legs[2].ground_contact else 0.0
 
         done = False
         if self.game_over or pos[0] < 0:
             reward = -100
             done   = True
-        if pos[0] > (TERRAIN_LENGTH*self.terrain_length_scale - TERRAIN_GRASS)*TERRAIN_STEP:
+        if pos[0] > (TERRAIN_LENGTH*self.terrain_length_scale-TERRAIN_GRASS)*TERRAIN_STEP:
             done   = True
         return np.array(state), reward, done, {}
 
