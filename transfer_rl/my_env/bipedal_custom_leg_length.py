@@ -119,9 +119,17 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
 
     hardcore = False
 
-    def __init__(self, leg_length=34, terrain_length_scale=200, knee_contact_penalty=0):
+    def __init__(self, leg_length=34, terrain_length_scale=200,
+                 fall_penalty = -100, torque_penalty = 0.00035, head_balance_penalty=5,
+                 head_height_penalty = 0, leg_sep_penalty=0, torque_diff_penalty=0):
         print(leg_length)
         self.terrain_length_scale=terrain_length_scale
+        self.fall_penalty = fall_penalty
+        self.torque_penalty = torque_penalty
+        self.head_balance_penalty = head_balance_penalty
+        self.head_height_penalty = head_height_penalty
+        self.leg_sep_penalty = leg_sep_penalty
+        self.torque_diff_penalty = torque_diff_penalty
         self.LEG_W, self.LEG_H = 8 / SCALE, leg_length / SCALE
         self.HULL_FD = fixtureDef(
             shape=polygonShape(vertices=[(x / SCALE, y / SCALE) for x, y in HULL_POLY]),
@@ -328,9 +336,10 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
         self.world.contactListener = self.world.contactListener_bug_workaround
         self.game_over = False
         self.prev_shaping = None
+        self.prev_actions = None
         self.scroll = 0.0
         self.lidar_render = 0
-
+        self.steps_done = 0
         W = VIEWPORT_W/SCALE
         H = VIEWPORT_H/SCALE
 
@@ -411,6 +420,7 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
     def step(self, action):
         #self.hull.ApplyForceToCenter((0, 20), True) -- Uncomment this to receive a bit of stability help
         control_speed = False  # Should be easier as well
+        self.steps_done += 1
         if control_speed:
             self.joints[0].motorSpeed = float(SPEED_HIP  * np.clip(action[0], -1, 1))
             self.joints[1].motorSpeed = float(SPEED_KNEE * np.clip(action[1], -1, 1))
@@ -461,23 +471,40 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
         self.scroll = pos.x - VIEWPORT_W/SCALE/5
 
         shaping  = 130*pos[0]/SCALE   # moving forward is a way to receive reward (normalized to get 300 on completion)
-        shaping -= 5.0*abs(state[0])  # keep head straight, other than that and falling, any behavior is unpunished
+        shaping -= self.head_balance_penalty*abs(state[0])  # keep head straight, other than that and falling, any behavior is unpunished        )
+        shaping += self.head_height_penalty*0.3*vel.y*(VIEWPORT_W/SCALE)/FPS # ADD for keeping head high.
 
         reward = 0
         if self.prev_shaping is not None:
             reward = shaping - self.prev_shaping
         self.prev_shaping = shaping
 
+        leg_ang_diff = abs(self.legs[0].angle - self.legs[2].angle)
+        reward -= self.leg_sep_penalty * leg_ang_diff
+
+        if self.prev_actions is not None:
+            a = np.clip(np.array(action), -1, 1)
+            pa = np.clip(np.array(self.prev_actions), -1, 1)
+            d = np.sum(np.abs(a-pa))
+            reward -= d*self.torque_diff_penalty
+
+        self.prev_actions = action
+
         for a in action:
-            reward -= 0.00035 * MOTORS_TORQUE * np.clip(np.abs(a), 0, 1)
+
+            reward -= self.torque_penalty * MOTORS_TORQUE * np.clip(np.abs(a), 0, 1)
             # normalized to about -50.0 using heuristic, more optimal agent should spend less
 
         done = False
+
         if self.game_over or pos[0] < 0:
-            reward = -100
+            reward += self.fall_penalty
             done   = True
         if pos[0] > (TERRAIN_LENGTH*self.terrain_length_scale-TERRAIN_GRASS)*TERRAIN_STEP:
             done   = True
+        # if pos[0] < 10 and self.steps_done > 150:
+        #     reward = -100
+        #     done = True
         return np.array(state), reward, done, {}
 
     def render(self, mode='human'):

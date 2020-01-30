@@ -10,6 +10,7 @@ class Buffer():
         """
         self.actions = []
         self.states = []
+        self.next_states = []
         self.logp = []
         self.rewards = []
         self.dones = []
@@ -22,16 +23,18 @@ class Buffer():
         """
         self.pt = 0
 
-    def push(self, action, states, logp, reward, done):
+    def push(self, action, states, logp, reward, done, next_states):
         if len(self.actions) > self.pt:
             self.actions[self.pt] = action
             self.states[self.pt] = states
+            self.next_states[self.pt] = next_states
             self.logp[self.pt] = logp
             self.rewards[self.pt] = reward
             self.dones[self.pt] = done
         else:
             self.actions.append(action)
             self.states.append(states)
+            self.next_states.append(next_states)
             self.logp.append(logp)
             self.rewards.append(reward)
             self.dones.append(done)
@@ -45,7 +48,7 @@ class Buffer():
         :return: All memory in buffer up to current index
         """
         return self.actions[:self.pt], self.states[:self.pt], self.logp[:self.pt], \
-               self.rewards[:self.pt], self.dones[:self.pt]
+               self.rewards[:self.pt], self.dones[:self.pt], self.next_states[:self.pt]
 
     def sample(self, batch_size):
         """
@@ -56,11 +59,13 @@ class Buffer():
         indices = np.random.choice(len(self.actions), batch_size)
         actions = [self.actions[idx] for idx in indices]
         states = [self.states[idx] for idx in indices]
+        next_states = [self.next_states[idx] for idx in indices]
         logp = [self.logp[idx] for idx in indices]
         rewards = [self.rewards[idx] for idx in indices]
         dones = [self.dones[idx] for idx in indices]
 
-        return actions, states, logp, rewards, dones
+        # print(actions)
+        return actions, states, logp, rewards, dones, next_states
 
     def __len__(self):
         return self.pt

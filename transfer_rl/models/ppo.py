@@ -1,6 +1,6 @@
 import torch
 from .controller import Controller
-from .network import FeedForwardActorCritic
+from .network import FeedForwardPPO
 import numpy as np
 
 class PPO(Controller):
@@ -27,8 +27,8 @@ class PPO(Controller):
                      gamma=0.99, eps=0.2, learning_rate=1e-4, train_steps=80, batch_size=10000,
                      optimizer_type='adam'):
 
-        self.model = FeedForwardActorCritic(n_features, n_actions, hidden_layers,
-                                               self.device, action_std)
+        self.model = FeedForwardPPO(n_features, n_actions, hidden_layers,
+                                    self.device, action_std)
         self.model.to(self.device)
 
         self.train_steps = train_steps  # Initialize number of training steps to 0
@@ -69,7 +69,7 @@ class PPO(Controller):
             mem.reset()
 
     def train(self, mem):
-        batch_actions, batch_states, batch_logp, batch_rewards, batch_dones = mem.get_all()
+        batch_actions, batch_states, batch_logp, batch_rewards, batch_dones, _ = mem.get_all()
 
         discounted_rewards = [0 for i in range(len(batch_rewards))]
         r = 0

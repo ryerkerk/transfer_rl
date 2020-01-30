@@ -6,6 +6,7 @@ import torch
 import sys
 import pickle
 import os
+import time
 import numpy as np
 
 device = "cpu"
@@ -17,11 +18,14 @@ if __name__ == "__main__":
     params = parse_arg()
     print(params)
 
-    # env = gym.make(params['env'], leg_length=params['leg_length'], terrain_length_scale=params['terrain_length_scale'],
-    #              knee_contact_penalty=params['knee_contact_penalty'])
-
     env = gym.make(params['env'], leg_length=params['leg_length'],
-                   terrain_length_scale=params['terrain_length_scale'])
+                   terrain_length_scale=params['terrain_length_scale'],
+                   fall_penalty=params['fall_penalty'],
+                   torque_penalty=params['torque_penalty'],
+                   head_balance_penalty=params['head_balance_penalty'],
+                   head_height_penalty=params['head_height_penalty'],
+                   leg_sep_penalty=params['leg_sep_penalty'],
+                   torque_diff_penalty=params['torque_diff_penalty'])
 
     if params['model'] == 'ppo':
         model = PPO(device=device)
@@ -39,7 +43,7 @@ if __name__ == "__main__":
                            learning_rate=params['learning_rate'], gamma=params['gamma'],
                            batch_size=params['batch_size'], train_steps=params['train_steps'],
                            optimizer_type=params['optimizer'])
-        mem = Buffer()
+        mem = Buffer(capacity = params['memory_capacity'])
     else:
         sys.exit("Model type {} not recognized".format(params['model']))
 
@@ -65,7 +69,8 @@ if __name__ == "__main__":
             action, logp = model.sample_action(state)
             prev_state = state
             state, reward, done, _ = env.step(action.numpy().squeeze())
-            mem.push(action, prev_state, logp, reward, done)
+            state = torch.FloatTensor(state.reshape(1, -1)).to(device)
+            mem.push(action, prev_state, logp, reward, done, state)
             cur_reward += reward
 
             # Train once memory is larger enough. Don't train if rendering.
@@ -81,8 +86,9 @@ if __name__ == "__main__":
 
         results.append([total_steps, cur_steps, cur_reward])
 
-        if cur_episode % 20 == 0:
-            print("{}, {}, {}".format(cur_episode, batch_reward // 20, batch_steps // 20))
+        rep_n = 20
+        if cur_episode % rep_n == 0:
+            print("{}, {}, {}".format(cur_episode, batch_reward // rep_n, batch_steps // rep_n))
             batch_reward = 0
             batch_steps = 0
 
