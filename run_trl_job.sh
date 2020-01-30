@@ -20,25 +20,26 @@ if [ ! ${INITIAL_MODEL} == "none" ]; then
   aws s3 cp "s3://transfer-rl/trained_models/${initial_model}.pt" - > "./trained_models/${initial_model}.pt" || error_exit "Failed to download initial model from s3 bucket."
 fi
 
-# Environmental variables to check for
-declare -a ENV_LIST=("save_name" "env" "leg_length" "total_frames" \
-                     "initial_model" "max_time_steps" "batch_size" \
-                     "learning_rate" "train_steps" "hidden_layers" "optimizer" \
-                     "model" "action_std" "gamma")
+# Check command line arguments for script, and then check if a
+# matching envinronmental variable is defined.
 
-# Check if each environmental variables exist.
 # If they do, add to argument list for eventual python call
+pat="--([^ ]+).+"
 arg_list=""
-for E in "${ENV_LIST[@]}"
-do
-  if [[ !   ${!E} == "" ]]; then
-    arg_list="${arg_list} --${E}=${!E}"    
-  fi
-done
-
-if [[ -z ${!E+x} ]]; then
-  echo ${!E}
-fi
+while IFS= read -r line; do
+    # Check if line contains a command line argument
+    if [[ $line =~ $pat ]]; then
+      E=${BASH_REMATCH[1]}
+      # Check that a matching environmental variable is declared
+      if [[ ! ${!E} == "" ]]; then
+        # Make sure argument isn't already include in argument list
+        if [[ ! ${arg_list} =~ "--${E}=" ]]; then
+          # Add to argument list
+          arg_list="${arg_list} --${E}=${!E}"
+        fi
+      fi
+    fi
+done < <(python3 run.py --help)
 
 python3 -u run.py ${arg_list} | tee "${save_name}.txt"
 
