@@ -1,1 +1,0 @@
-{'save_name': '', 'initial_model': 'None', 'learning_rate': 0.01}
