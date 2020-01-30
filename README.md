@@ -1,5 +1,6 @@
 # Transfer Reinforcement Learning
 ## About
+(work in progress)
 
 This project explores transfer learning in reinforcement models. Products using reinforcement learning are likely to go through many design iterations during their life cycle. Eventually these changes will invalidate previously trained policies. Through transfer learning the previously trained policy may be able to reduce the costs of retraining the model for the new product iteration.
 
