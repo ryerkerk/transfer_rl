@@ -14,6 +14,8 @@ def parse_arg():
                         help="Values greater or smaller than 1 make terrain respectively longer or shorter")
     parser.add_argument("--fall_penalty", type=float, default=-100,
                         help="Penalty for falling over, should be negative value")
+    parser.add_argument("--finish_bonus", type=float, default=0,
+                        help="Bonus reward for staying on feet, should be positive value")
     parser.add_argument("--torque_penalty", type=float, default=0.00035,
                         help="Penalty for applying torque, should be positive value")
     parser.add_argument("--head_balance_penalty", type=float, default=5,

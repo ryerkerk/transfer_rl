@@ -119,12 +119,15 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
 
     hardcore = False
 
-    def __init__(self, leg_length=34, terrain_length_scale=200,
+    def __init__(self, max_steps=1500, leg_length=34, terrain_length_scale=200,
                  fall_penalty = -100, torque_penalty = 0.00035, head_balance_penalty=5,
-                 head_height_penalty = 0, leg_sep_penalty=0, torque_diff_penalty=0):
+                 head_height_penalty = 0, leg_sep_penalty=0, torque_diff_penalty=0,
+                 finish_bonus=50):
         print(leg_length)
+        self.max_steps = max_steps
         self.terrain_length_scale=terrain_length_scale
         self.fall_penalty = fall_penalty
+        self.finish_bonus = finish_bonus
         self.torque_penalty = torque_penalty
         self.head_balance_penalty = head_balance_penalty
         self.head_height_penalty = head_height_penalty
@@ -499,9 +502,11 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
 
         if self.game_over or pos[0] < 0:
             reward += self.fall_penalty
-            done   = True
-        if pos[0] > (TERRAIN_LENGTH*self.terrain_length_scale-TERRAIN_GRASS)*TERRAIN_STEP:
-            done   = True
+            done = True
+        if pos[0] > (TERRAIN_LENGTH*self.terrain_length_scale-TERRAIN_GRASS)*TERRAIN_STEP\
+                or self.steps_done >= self.max_steps:
+            reward += self.finish_bonus
+            done = True
         # if pos[0] < 10 and self.steps_done > 150:
         #     reward = -100
         #     done = True

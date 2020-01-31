@@ -18,9 +18,11 @@ if __name__ == "__main__":
     params = parse_arg()
     print(params)
 
-    env = gym.make(params['env'], leg_length=params['leg_length'],
+    env = gym.make(params['env'], max_steps=params['max_time_steps'],
+                   leg_length=params['leg_length'],
                    terrain_length_scale=params['terrain_length_scale'],
                    fall_penalty=params['fall_penalty'],
+                   finish_bonus=params['finish_bonus'],
                    torque_penalty=params['torque_penalty'],
                    head_balance_penalty=params['head_balance_penalty'],
                    head_height_penalty=params['head_height_penalty'],
@@ -60,7 +62,8 @@ if __name__ == "__main__":
         state = env.reset()
         cur_reward = 0
         cur_steps = 0
-        while cur_steps < params['max_time_steps']:
+        done = False
+        while done == False:
             cur_steps += 1
             if params['render']:
                 env.render()
@@ -87,7 +90,7 @@ if __name__ == "__main__":
         results.append([total_steps, cur_steps, cur_reward])
 
         rep_n = 20
-        if cur_episode % rep_n == 0:
+        if cur_episode % rep_n == 0 or params['render'] == True:
             print("{}, {}, {}".format(cur_episode, batch_reward // rep_n, batch_steps // rep_n))
             batch_reward = 0
             batch_steps = 0
