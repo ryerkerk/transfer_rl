@@ -27,7 +27,7 @@ def parse_arg():
     parser.add_argument("--torque_diff_penalty", type=float, default=0,
                         help="Penalty for differences in torque powers each time step. Promotes smoother motion")
 
-    parser.add_argument("--leg_length", type=int, default=34,
+    parser.add_argument("--leg_length", type=float, default=34,
                         help="Leg length of robot")
     parser.add_argument("--initial_model", type=str, default='none',
                         help="Model to load and initialize new model through transfer learning. Model must be present in ./trained_models/")

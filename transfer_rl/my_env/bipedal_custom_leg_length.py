@@ -342,7 +342,7 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
         self.prev_actions = None
         self.scroll = 0.0
         self.lidar_render = 0
-        self.steps_done = 0
+        self.steps_done = -1 # -1 So we don't count the initial reset step
         W = VIEWPORT_W/SCALE
         H = VIEWPORT_H/SCALE
 
