@@ -70,9 +70,10 @@ class EpisodeRunner:
             self.mem.push(action, prev_state, logp, reward, done, state)
             cur_reward += reward
 
-            # Train once memory is larger enough. Don't train if rendering.
-            if not self.render:
-                self.model.check_train(self.mem)
+        # After episode is finished check if model should train.
+        # Don't train when rendering
+        if not self.render:
+            self.model.check_train(self.mem)
 
         # Record results from episode
         self.total_steps += cur_steps
