@@ -12,7 +12,7 @@ def parse_arg():
                         help="Name of openai gym environment")
     parser.add_argument("--terrain_length_scale", type=int, default=2,
                         help="Values greater or smaller than 1 make terrain respectively longer or shorter")
-    parser.add_argument("--fall_penalty", type=float, default=-100,
+    parser.add_argument("--fall_penalty", type=float, default=-50,
                         help="Penalty for falling over, should be negative value")
     parser.add_argument("--finish_bonus", type=float, default=0,
                         help="Bonus reward for staying on feet, should be positive value")
@@ -34,7 +34,7 @@ def parse_arg():
 
     parser.add_argument("--max_time_steps", type=int, default=1500,
                         help="Number of time steps allowed per environment run")
-    parser.add_argument("--total_frames", type=int, default=5e6,
+    parser.add_argument("--total_frames", type=int, default=10e6,
                         help="Total number of frames (time steps) allowed during study")
 
     parser.add_argument("--hidden_layers", type=str, default="[32,32,32,32]",
@@ -55,7 +55,7 @@ def parse_arg():
                         help="Standard deviation of noise applied to actions")
     parser.add_argument("--action_std_decay", type=float, default=0.999,
                         help="Decay rate of noise (for ddpg only)")
-    parser.add_argument("--gamma", type=float, default=0.99,
+    parser.add_argument("--gamma", type=float, default=0.98,
                         help="Reward discount rate")
     parser.add_argument("--render", type=bool, default=False,
                         help="Set to true to render model. No training occurs if model is rendered")
