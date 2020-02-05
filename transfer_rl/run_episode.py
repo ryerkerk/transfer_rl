@@ -70,21 +70,22 @@ class EpisodeRunner:
             self.mem.push(action, prev_state, logp, reward, done, state)
             cur_reward += reward
 
-        # After episode is finished check if model should train.
-        # Don't train when rendering
-        if not self.render:
-            self.model.check_train(self.mem)
-
         # Record results from episode
         self.total_steps += cur_steps
         self.last_n_rewards.append(cur_reward)
         self.last_n_steps.append(cur_steps)
+
+        # After episode is finished check if model should train.
+        # Don't train when rendering
+        if not self.render:
+            self.model.check_train(self.mem, self.total_steps)
 
     def post_episode(self):
 
         n = 200
         n_start = max(0, len(self.last_n_rewards) - n)
         cur_average_reward = np.mean(self.last_n_rewards[n_start:])
+
         print("Episode: {}, Frames elapsed: {}, Last reward: {}, Average reward: {}".format(
             len(self.last_n_rewards), self.total_steps,
             self.last_n_rewards[-1], cur_average_reward))

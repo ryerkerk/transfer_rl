@@ -18,6 +18,13 @@ if __name__ == "__main__":
     env = setup_env(params)
     model, mem = setup_model_mem(env, params, device=device)
 
+    if params['action_std_start'] >= 0:
+        print("Using adaptive action noise")
+        model.set_adaptive_action_std(action_std_start=params['action_std_start'],
+                                      action_std_final=params['action_std_final'],
+                                      action_std_end=params['action_std_end'],
+                                      total_frames=params['total_frames'])
+
     if params['initial_model'] != 'none':
         print("Loading {}".format('./trained_models/{}.pt'.format(params['initial_model'])))
         model.load_model('./trained_models/{}.pt'.format(params['initial_model']))

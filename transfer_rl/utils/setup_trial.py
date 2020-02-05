@@ -28,7 +28,9 @@ def setup_model_mem(env, params, device='mem'):
                            hidden_layers=params['hidden_layers'], action_std=params['action_std'],
                            learning_rate=params['learning_rate'], gamma=params['gamma'],
                            batch_size=params['batch_size'], train_steps=params['train_steps'],
-                           optimizer_type=params['optimizer'])
+                           optimizer_type=params['optimizer'], total_frames=params['total_frames'],
+                           transfer_learning=params['transfer_learning'], tl_start = params['tl_start'],
+                           tl_end=params['tl_end'])
         mem = Buffer()
     elif params['model'] == 'ddpg':
         model = DDPG(device=device)
@@ -43,3 +45,4 @@ def setup_model_mem(env, params, device='mem'):
         sys.exit("Model type {} not recognized".format(params['model']))
 
     return model, mem
+

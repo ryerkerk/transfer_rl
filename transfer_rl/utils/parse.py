@@ -46,6 +46,14 @@ def parse_arg():
                         help="Optimizer used with reinforcement model")
     parser.add_argument("--learning_rate", type=float, default=3e-4,
                         help="Learning rate of model")
+
+    parser.add_argument("--transfer_learning", type=str, default="none",
+                        help="Type of transfer learning, if applicable")
+    parser.add_argument("--tl_start", type=float, default=0.05,
+                        help="Parameter for certain types of transfer learning")
+    parser.add_argument("--tl_end", type=float, default=0.25,
+                        help="Parameter for certain types of transfer learning")
+
     parser.add_argument("--batch_size", type=int, default=10000,
                         help="batch size for optimizer")
     parser.add_argument("--train_steps", type=int, default=80,
@@ -53,6 +61,13 @@ def parse_arg():
 
     parser.add_argument("--action_std", type=float, default=0.5,
                         help="Standard deviation of noise applied to actions")
+    parser.add_argument("--action_std_start", type=float, default=-1,
+                        help="Starting value for standard deviation of noise applied to actions, setting value will enable adaptive action noise")
+    parser.add_argument("--action_std_final", type=float, default=-1,
+                        help="Final value for standard deviation of noise applied to actions, setting value will enable adaptive action noise")
+    parser.add_argument("--action_std_end", type=float, default=-1,
+                        help="Fraction of frames to transition from starding action noise value to final")
+
     parser.add_argument("--action_std_decay", type=float, default=0.999,
                         help="Decay rate of noise (for ddpg only)")
     parser.add_argument("--gamma", type=float, default=0.98,

@@ -1,6 +1,7 @@
 import torch
 from .controller import Controller
 from .network import FeedForwardPPO
+from ..transfer_learning import TransferLearningInitializeOnly, TransferLearningFreezeNLayers, TransferLearningFreezeNLayersFullThaw
 import numpy as np
 
 class PPO(Controller):
@@ -22,10 +23,12 @@ class PPO(Controller):
         self.train_steps = 80
         self.batch_size = 10000
         self.action_std = 0.5
-
+        self.transfer_learning = None
+        self.adaptive_action_std = False
     def create_model(self, n_features, n_actions, hidden_layers=[10, 10, 10], action_std=0.1,
                      gamma=0.99, eps=0.2, learning_rate=1e-4, train_steps=80, batch_size=10000,
-                     optimizer_type='adam'):
+                     optimizer_type='adam', transfer_learning=None, total_frames=1e6,
+                     tl_start = 0.1, tl_end=0.3):
 
         self.model = FeedForwardPPO(n_features, n_actions, hidden_layers,
                                     self.device, action_std)
@@ -50,9 +53,46 @@ class PPO(Controller):
         else:
             raise Exception('Unrecognized optimizer')
 
+        if transfer_learning == 'initialize' or transfer_learning == 'none':
+            self.transfer_learning = TransferLearningInitializeOnly(optim = self.optimizer,
+                                                                    models = [self.model.actor, self.model.critic],
+                                                                    total_frames = total_frames)
+        elif transfer_learning == 'freeze_first_layer':
+            self.transfer_learning = TransferLearningFreezeNLayers(optim=self.optimizer,
+                                                                    models=[self.model.actor, self.model.critic],
+                                                                    total_frames=total_frames)
+        elif transfer_learning == 'freeze_full_thaw':
+            self.transfer_learning = TransferLearningFreezeNLayersFullThaw(optim=self.optimizer,
+                                                               models=[self.model.actor, self.model.critic],
+                                                               tl_start=tl_start, tl_end=tl_end,
+                                                               total_frames=total_frames)
+        else:
+            raise Exception('Unrecognized transfer learning')
+
+        print(self.optimizer)
         print(self.model.forward)
 
         pass
+
+    def set_adaptive_action_std(self, action_std_start, action_std_final, action_std_end, total_frames):
+        assert action_std_start >= 0, "Starting action std value needs to be greater than 0 when using adaptive action noise"
+        assert action_std_final >= 0, "Ending action std value needs to be greater than 0 when using adaptive action noise"
+        assert 0 <= action_std_end <= 1, "Transition period for adaptive action noise needs to be between 0 and 1"
+
+        self.adaptive_action_std = True
+        self.action_std_start = action_std_start
+        self.action_std_final = action_std_final
+        self.action_std_end_frame = action_std_end*total_frames
+        self.action_std = self.action_std_start
+
+    def update_action_std(self, frames):
+        # Only update if using adaptive noise
+        if self.adaptive_action_std == True:
+            self.action_std = self.action_std_start \
+                    + (self.action_std_final - self.action_std_start) * frames / self.action_std_end_frame
+            if frames > self.action_std_end_frame:
+                self.action_std = self.action_std_final
+
 
     def sample_action(self, state):
         """
@@ -63,10 +103,22 @@ class PPO(Controller):
 
         return actions, logp
 
-    def check_train(self, mem):
+    def check_train(self, mem, frames):
         if len(mem) >= self.batch_size:
+            self.transfer_learning.update_learning_rates(frames)
             self.train(mem)
             mem.reset()
+            """ Debugging
+            w = []
+            for i in range(len(self.model.actor)):
+                if hasattr(self.model.actor[i], 'weight'):
+                    w.append(float(self.model.actor[i].weight.sum().detach()))
+                    w.append(float(self.model.actor[i].bias.sum().detach()))
+            print(w)
+            """
+
+        self.update_action_std(frames)
+        print(self.action_std)
 
     def train(self, mem):
         batch_actions, batch_states, batch_logp, batch_rewards, batch_dones, _ = mem.get_all()

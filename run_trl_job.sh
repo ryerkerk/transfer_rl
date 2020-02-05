@@ -16,7 +16,7 @@ if [ ! -d "trained_models" ]; then
   mkdir trained_models
 fi
 
-if [ ! ${INITIAL_MODEL} == "none" ]; then
+if [ ! ${initial_model} == "none" ]; then
   aws s3 cp "s3://transfer-rl/trained_models/${initial_model}.pt" - > "./trained_models/${initial_model}.pt" || error_exit "Failed to download initial model from s3 bucket."
 fi
 
@@ -49,4 +49,3 @@ aws s3 cp "./${save_name}.txt" "s3://transfer-rl/logs/${save_name}.txt" || error
 
 date
 echo "Finished"
-\
