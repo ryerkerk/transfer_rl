@@ -8,7 +8,7 @@ import time
 import numpy as np
 
 device = "cpu"
-os.makedirs('results', exist_ok=True)           # Ensure these directories exist to save into
+os.makedirs('results', exist_ok=True)  # Ensure these directories exist to save into
 os.makedirs('trained_models', exist_ok=True)
 
 if __name__ == "__main__":
@@ -28,6 +28,10 @@ if __name__ == "__main__":
     if params['initial_model'] != 'none':
         print("Loading {}".format('./trained_models/{}.pt'.format(params['initial_model'])))
         model.load_model('./trained_models/{}.pt'.format(params['initial_model']))
+        print(params['reset_final_layer'])
+        if params['reset_final_layer'] == True:
+            print('Resetting final layer')
+            model.reset_final_layer()
 
     total_steps = 0
     runner = EpisodeRunner(env, model, mem, params['save_name'], device=device, render=params['render'])

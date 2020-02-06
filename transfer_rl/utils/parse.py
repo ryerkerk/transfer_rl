@@ -1,5 +1,16 @@
 import argparse
 
+def check_bool(v):
+    """
+    Used to convert the "true" or "false" supplied in command line to boolean values.
+    """
+    if v.lower() in ('true'):
+        return True
+    elif v.lower() in ('false'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Please set boolean value to true or false')
+
 def parse_arg():
     parser = argparse.ArgumentParser(usage="python %(prog)s --save_name SAVE_NAME [options]",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -47,6 +58,9 @@ def parse_arg():
     parser.add_argument("--learning_rate", type=float, default=3e-4,
                         help="Learning rate of model")
 
+    parser.add_argument("--reset_final_layer", type=check_bool, default=False,
+                        help="Reinitialize final layer of weights, only applies if initial model is specified")
+
     parser.add_argument("--transfer_learning", type=str, default="none",
                         help="Type of transfer learning, if applicable")
     parser.add_argument("--tl_start", type=float, default=0.05,
@@ -66,13 +80,13 @@ def parse_arg():
     parser.add_argument("--action_std_final", type=float, default=-1,
                         help="Final value for standard deviation of noise applied to actions, setting value will enable adaptive action noise")
     parser.add_argument("--action_std_end", type=float, default=-1,
-                        help="Fraction of frames to transition from starding action noise value to final")
+                        help="Fr    action of frames to transition from starding action noise value to final")
 
     parser.add_argument("--action_std_decay", type=float, default=0.999,
                         help="Decay rate of noise (for ddpg only)")
     parser.add_argument("--gamma", type=float, default=0.98,
                         help="Reward discount rate")
-    parser.add_argument("--render", type=bool, default=False,
+    parser.add_argument("--render", type=check_bool, default=False,
                         help="Set to true to render model. No training occurs if model is rendered")
 
     params = vars(parser.parse_args())

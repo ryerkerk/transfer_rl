@@ -1,4 +1,5 @@
 import torch
+import math
 from .controller import Controller
 from .network import FeedForwardPPO
 from ..transfer_learning import TransferLearningInitializeOnly, TransferLearningFreezeNLayers, TransferLearningFreezeNLayersFullThaw
@@ -157,6 +158,21 @@ class PPO(Controller):
             self.optimizer.zero_grad()
             loss.mean().backward()
             self.optimizer.step()
+
+    def reset_final_layer(self):
+        models = [self.model.actor, self.model.critic]
+
+        for i in range(len(models)):
+            layer_count = 0
+            layers = list(models[i].named_children())
+            for _, cur_layer in layers[::-1]:
+                if hasattr(cur_layer, 'weight'):
+                    layer_count += 1
+                    if layer_count <= 1:
+                        stdv = 1. / math.sqrt(cur_layer.weight.size(1))
+                        cur_layer.weight.data.uniform_(-stdv, stdv)
+                        if cur_layer.bias is not None:
+                            cur_layer.bias.data.uniform_(-stdv, stdv)
 
     def save_model(self, path):
         """
