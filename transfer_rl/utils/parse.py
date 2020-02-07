@@ -60,6 +60,10 @@ def parse_arg():
 
     parser.add_argument("--reset_final_layer", type=check_bool, default=False,
                         help="Reinitialize final layer of weights, only applies if initial model is specified")
+    parser.add_argument("--add_noise_layers", type=int, default=0,
+                        help="Add noise to this many layers, only applies if initial model is specified")
+    parser.add_argument("--add_noise_alpha", type=float, default=1,
+                        help="Amount of noise added is this value multiplied by standard deviation of noise in each layer")
 
     parser.add_argument("--transfer_learning", type=str, default="none",
                         help="Type of transfer learning, if applicable")

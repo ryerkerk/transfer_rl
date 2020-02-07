@@ -119,7 +119,6 @@ class PPO(Controller):
             """
 
         self.update_action_std(frames)
-        print(self.action_std)
 
     def train(self, mem):
         batch_actions, batch_states, batch_logp, batch_rewards, batch_dones, _ = mem.get_all()
@@ -173,6 +172,19 @@ class PPO(Controller):
                         cur_layer.weight.data.uniform_(-stdv, stdv)
                         if cur_layer.bias is not None:
                             cur_layer.bias.data.uniform_(-stdv, stdv)
+
+    def add_noise_layers(self, n, alpha=1):
+        models = [self.model.actor, self.model.critic]
+
+        for i in range(len(models)):
+            layer_count = 0
+            layers = list(models[i].named_children())
+            for _, cur_layer in layers[::-1]:
+                if hasattr(cur_layer, 'weight'):
+                    layer_count += 1
+                    if layer_count <= n:
+                        with torch.no_grad():
+                            cur_layer.weight.add_(torch.nn.Parameter(torch.randn(cur_layer.weight.size()) * alpha * cur_layer.weight.std()))
 
     def save_model(self, path):
         """
