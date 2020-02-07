@@ -86,8 +86,6 @@ def parse_arg():
     parser.add_argument("--action_std_end", type=float, default=-1,
                         help="Fr    action of frames to transition from starding action noise value to final")
 
-    parser.add_argument("--action_std_decay", type=float, default=0.999,
-                        help="Decay rate of noise (for ddpg only)")
     parser.add_argument("--gamma", type=float, default=0.98,
                         help="Reward discount rate")
     parser.add_argument("--render", type=check_bool, default=False,
