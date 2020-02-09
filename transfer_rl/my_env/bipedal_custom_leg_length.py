@@ -119,20 +119,15 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
 
     hardcore = False
 
-    def __init__(self, max_steps=1500, leg_length=34, terrain_length_scale=200,
-                 fall_penalty = -100, torque_penalty = 0.00035, head_balance_penalty=5,
-                 head_height_penalty = 0, leg_sep_penalty=0, torque_diff_penalty=0,
-                 finish_bonus=50):
+    def __init__(self, max_steps=1500, leg_length=34, terrain_length_scale=2,
+                 fall_penalty = -50):
         print(leg_length)
         self.max_steps = max_steps
         self.terrain_length_scale=terrain_length_scale
         self.fall_penalty = fall_penalty
-        self.finish_bonus = finish_bonus
-        self.torque_penalty = torque_penalty
-        self.head_balance_penalty = head_balance_penalty
-        self.head_height_penalty = head_height_penalty
-        self.leg_sep_penalty = leg_sep_penalty
-        self.torque_diff_penalty = torque_diff_penalty
+        self.torque_penalty = 0.00035
+        self.head_balance_penalty = 5
+
         self.LEG_W, self.LEG_H = 8 / SCALE, leg_length / SCALE
         self.HULL_FD = fixtureDef(
             shape=polygonShape(vertices=[(x / SCALE, y / SCALE) for x, y in HULL_POLY]),
@@ -475,21 +470,16 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
 
         shaping  = 130*pos[0]/SCALE   # moving forward is a way to receive reward (normalized to get 300 on completion)
         shaping -= self.head_balance_penalty*abs(state[0])  # keep head straight, other than that and falling, any behavior is unpunished        )
-        shaping += self.head_height_penalty*0.3*vel.y*(VIEWPORT_W/SCALE)/FPS # ADD for keeping head high.
 
         reward = 0
         if self.prev_shaping is not None:
             reward = shaping - self.prev_shaping
         self.prev_shaping = shaping
 
-        leg_ang_diff = abs(self.legs[0].angle - self.legs[2].angle)
-        reward -= self.leg_sep_penalty * leg_ang_diff
-
         if self.prev_actions is not None:
             a = np.clip(np.array(action), -1, 1)
             pa = np.clip(np.array(self.prev_actions), -1, 1)
             d = np.sum(np.abs(a-pa))
-            reward -= d*self.torque_diff_penalty
 
         self.prev_actions = action
 
@@ -505,8 +495,8 @@ class BipedalWalkerCustomLegLength(gym.Env, EzPickle):
             done = True
         if pos[0] > (TERRAIN_LENGTH*self.terrain_length_scale-TERRAIN_GRASS)*TERRAIN_STEP\
                 or self.steps_done >= self.max_steps:
-            reward += self.finish_bonus
             done = True
+
         # if pos[0] < 10 and self.steps_done > 150:
         #     reward = -100
         #     done = True

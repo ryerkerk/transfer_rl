@@ -17,6 +17,7 @@ class PPO(Controller):
         super(PPO, self).__init__()
         self.device = torch.device(device)
         self.train_steps = 0
+        self.adaptive_action_std = False # Set to true by calling set_adaptive_action_std()
 
     def create_model(self, n_features, n_actions, hidden_layers=[10, 10, 10], action_std=0.1,
                      gamma=0.99, eps=0.2, learning_rate=1e-4, train_steps=80, batch_size=10000,
@@ -57,8 +58,7 @@ class PPO(Controller):
         elif transfer_learning == 'freeze_full_thaw':
             self.transfer_learning = TransferLearningFreezeNLayersFullThaw(optim=self.optimizer,
                                                                models=[self.model.actor, self.model.critic],
-                                                               tl_start=tl_start, tl_end=tl_end,
-                                                               total_frames=total_frames)
+                                                               tl_end=tl_end, total_frames=total_frames)
         else:
             raise Exception('Unrecognized transfer learning')
 

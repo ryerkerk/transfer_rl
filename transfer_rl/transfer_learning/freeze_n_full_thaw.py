@@ -7,12 +7,11 @@ class TransferLearningFreezeNLayersFullThaw(TransferLearner):
     loaded earlier. All other function calls will just pass back to the caller.
     """
 
-    def __init__(self, optim=None, models=None, total_frames=None, n_frozen_layers=1,
-                 tl_start=0.1, tl_end=0.3):
+    def __init__(self, optim=None, models=None, total_frames=None, n_frozen_layers=1, tl_end=0.3):
         super(TransferLearningFreezeNLayersFullThaw, self).__init__(optim=optim, models=models, total_frame=total_frames)
 
         self.optim = optim
-        self.tl_frame_start = tl_start*total_frames
+
         self.tl_frame_end = tl_end*total_frames
 
         # Check lr defined in original optimizer
@@ -39,7 +38,7 @@ class TransferLearningFreezeNLayersFullThaw(TransferLearner):
 
     def update_learning_rates(self, cur_frame=0):
 
-        n_layers = 1 + max(0, (self.layer_count-1) * (cur_frame - self.tl_frame_start)/(self.tl_frame_end - self.tl_frame_start))
+        n_layers = 1 + max(0, (self.layer_count-1) * cur_frame/self.tl_frame_end)
         # Get rid of all parameter groups to start
         while len(self.optim.param_groups) > 0:
             del self.optim.param_groups[0]

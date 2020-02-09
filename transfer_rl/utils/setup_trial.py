@@ -1,5 +1,5 @@
 import gym
-from ..models import PPO, DDPG, Buffer
+from ..models import PPO, Buffer
 import sys
 
 
@@ -16,13 +16,7 @@ def setup_env(params):
            max_steps=params['max_time_steps'],
            leg_length=params['leg_length'],
            terrain_length_scale=params['terrain_length_scale'],
-           fall_penalty=params['fall_penalty'],
-           finish_bonus=params['finish_bonus'],
-           torque_penalty=params['torque_penalty'],
-           head_balance_penalty=params['head_balance_penalty'],
-           head_height_penalty=params['head_height_penalty'],
-           leg_sep_penalty=params['leg_sep_penalty'],
-           torque_diff_penalty=params['torque_diff_penalty'])
+           fall_penalty=params['fall_penalty'] )
     else:
         sys.exit("Environment type {} not recognized".format(params['env']))
 
@@ -48,8 +42,7 @@ def setup_model_mem(env, params, device='mem'):
                            learning_rate=params['learning_rate'], gamma=params['gamma'],
                            batch_size=params['batch_size'], train_steps=params['train_steps'],
                            optimizer_type=params['optimizer'], total_frames=params['total_frames'],
-                           transfer_learning=params['transfer_learning'], tl_start = params['tl_start'],
-                           tl_end=params['tl_end'])
+                           transfer_learning=params['transfer_learning'], tl_end=params['tl_end'])
         mem = Buffer()  # Initialize memory buffer.
     else:
         sys.exit("Model type {} not recognized".format(params['model']))
