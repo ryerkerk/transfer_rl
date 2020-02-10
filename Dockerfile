@@ -7,9 +7,8 @@ RUN apt-get update; \
     pip3 install torch==1.4.0+cpu -f https://download.pytorch.org/whl/torch_stable.html; \
     pip3 install numpy gym box2d-py
 
+# awscli is only necessary if this wil be run on aws services using the provided run_trl_job.sh script.
 RUN pip3 install awscli
-
-RUN echo "hello"
 
 COPY ./ /usr/local/transfer_rl
 

@@ -8,8 +8,8 @@ import numpy as np
 
 class PPO(Controller):
     """
-    The proximal policy optimization (PPO) model is based on the paper
-    by "Proximal Policy Optimization Algorithms" Schulman et al.
+    The proximal policy optimization (PPO) algorithm is based on the paper
+    "Proximal Policy Optimization Algorithms" by Schulman et al.
 
 
     """
@@ -51,11 +51,11 @@ class PPO(Controller):
             self.transfer_learning = TransferLearningInitializeOnly(optim = self.optimizer,
                                                                     models = [self.model.actor, self.model.critic],
                                                                     total_frames = total_frames)
-        elif transfer_learning == 'freeze_first_layer':
+        elif transfer_learning == 'freeze_all_but_final':
             self.transfer_learning = TransferLearningFreezeNLayers(optim=self.optimizer,
                                                                     models=[self.model.actor, self.model.critic],
                                                                     total_frames=total_frames)
-        elif transfer_learning == 'freeze_full_thaw':
+        elif transfer_learning == 'freeze_then_thaw':
             self.transfer_learning = TransferLearningFreezeNLayersFullThaw(optim=self.optimizer,
                                                                models=[self.model.actor, self.model.critic],
                                                                tl_end=tl_end, total_frames=total_frames)

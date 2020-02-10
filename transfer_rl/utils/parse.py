@@ -41,11 +41,13 @@ def parse_arg():
                         help="Number of time steps allowed per environment run")
 
     # Network and model parameters
+    parser.add_argument("--device", type=str, default="cpu",
+                        help="Device to train on")
     parser.add_argument("--hidden_layers", type=str, default="[32,32,32,32]",
                         help="Number of nodes in each hidden layer")
-    parser.add_argument("--model", type=str, default="ppo",
+    parser.add_argument("--algorithm", type=str, default="ppo",
                         choices=['ppo'],
-                        help="Reinforcement model")
+                        help="Reinforcement learning algorithm")
     parser.add_argument("--optimizer", type=str, default="adam",
                         choices=['adam', 'adagrad', 'sgd', 'rmsprop'],
                         help="Optimizer used with reinforcement model")
@@ -70,7 +72,7 @@ def parse_arg():
     parser.add_argument("--initial_model", type=str, default='none',
                         help="Model to load and initialize new model through transfer learning. Model must be present in ./trained_models/")
     parser.add_argument("--transfer_learning", type=str, default="none",
-                        choices=['none', 'initialize', 'freeze_first_layer', 'freeze_full_thaw'],
+                        choices=['none', 'initialize', 'freeze_all_but_first', 'freeze_then_thaw'],
                         help="Type of transfer learning, if applicable")
     parser.add_argument("--tl_end", type=float, default=0.25,
                         help="Parameter for certain types of transfer learning")

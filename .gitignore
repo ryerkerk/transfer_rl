@@ -13,5 +13,8 @@ logs/
 transfer_rl/Misc/
 local_files/
 results/
-trained_models/
 Misc/
+
+# Only include sample trained model
+trained_models/*
+!trained_models/leg_34_trained.pt

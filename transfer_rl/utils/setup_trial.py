@@ -35,7 +35,7 @@ def setup_model_mem(env, params, device='mem'):
     """
 
     # Initialize model and memory.
-    if params['model'] == 'ppo':
+    if params['algorithm'] == 'ppo':
         model = PPO(device=device)
         model.create_model(n_features=env.observation_space.shape[0], n_actions=env.action_space.shape[0],
                            hidden_layers=params['hidden_layers'], action_std=params['action_std'],
@@ -45,7 +45,7 @@ def setup_model_mem(env, params, device='mem'):
                            transfer_learning=params['transfer_learning'], tl_end=params['tl_end'])
         mem = Buffer()  # Initialize memory buffer.
     else:
-        sys.exit("Model type {} not recognized".format(params['model']))
+        sys.exit("Method {} not recognized".format(params['algorithm']))
 
     # If adaptive action noise is used then call appropriate model function.
     if params['action_std_start'] >= 0:

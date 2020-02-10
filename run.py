@@ -7,7 +7,6 @@ import os
 import time
 import numpy as np
 
-device = "cpu"
 os.makedirs('results', exist_ok=True)  # Ensure these directories exist to save into
 os.makedirs('trained_models', exist_ok=True)
 
@@ -15,10 +14,10 @@ if __name__ == "__main__":
     params = parse_arg()
     print(params)
 
+    device = params['device']
+
     env = setup_env(params)
     model, mem = setup_model_mem(env, params, device=device)
-
-
 
     if params['initial_model'] != 'none':
         print("Loading {}".format('./trained_models/{}.pt'.format(params['initial_model'])))
