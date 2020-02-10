@@ -3,6 +3,7 @@ import numpy as np
 class Buffer():
     def __init__(self, capacity=-1):
         """
+        This is the memory buffer used by the reinforcement learning algorithms.
 
         :param capacity: A capacity of -1 means no maximum memory length.
                          Instead the current memory index must be periodically
@@ -52,7 +53,7 @@ class Buffer():
 
     def sample(self, batch_size):
         """
-        Return a random sample of memories
+        Return a random sample of memories.
         :param n: Number of samples to return
         """
 

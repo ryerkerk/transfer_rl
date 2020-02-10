@@ -5,6 +5,11 @@ import transfer_rl.my_env
 
 
 class EpisodeRunner:
+    """
+    EpisodeRunner manages the environment, model, and memory for a single study. It loops
+    through the time steps for each episode, calls the training functions, and prints/saves
+    the outputs over the course of the study.
+    """
     def __init__(self, env, model, mem, save_name, device='cpu', render=False):
         self.env = env
         self.model = model
@@ -33,8 +38,8 @@ class EpisodeRunner:
 
     def run(self, max_frames):
         """
-        Run episodes until the total number of frames (steps) is reached
-        :return:
+        Run episodes until the total number of frames (steps) is reached. Once the
+        maximum number of frames is met the study is complete
         """
 
         # Run episodes until total number of steps (frames) has been met
@@ -81,7 +86,12 @@ class EpisodeRunner:
             self.model.check_train(self.mem, self.total_steps)
 
     def post_episode(self):
+        """
+        Once an episode is complete this function will print or save an desired outputs,
+        this includes saving the trained model.
+        """
 
+        # Calculate running average reward
         n = 200
         n_start = max(0, len(self.last_n_rewards) - n)
         cur_average_reward = np.mean(self.last_n_rewards[n_start:])
@@ -98,10 +108,17 @@ class EpisodeRunner:
                 self.model.save_model("./trained_models/{}.pt".format(self.save_name))
 
     def save_results(self):
+        """
+        Write the results describing the number of steps taken, reward, and running average reward
+        of each episode. Results are saved to a pickle file.
+        """
+
+        # Calculate the total number of steps taken through each episode.
         culm_steps = [c for c in self.last_n_steps]
         for i in range(1, len(culm_steps)):
             culm_steps[i] += culm_steps[i-1]
 
+        # Save results to a pickle file.
         results = [[culm_steps[i], self.last_n_steps[i], self.last_n_rewards[i]]
                    for i in range(len(culm_steps))]
         pickle.dump(results, open('./results/' + self.save_name + '.p', 'wb'))

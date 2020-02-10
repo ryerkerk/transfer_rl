@@ -1,17 +1,15 @@
 import torch
 import math
 from .controller import Controller
-from .network import FeedForwardPPO
-from ..transfer_learning import TransferLearningInitializeOnly, TransferLearningFreezeNLayers, \
-                                TransferLearningFreezeNLayersFullThaw
+from .network import FeedForwardActorCritic
+from ..transfer_learning import TransferLearningInitializeOnly, TransferLearningFreezeAllButNLayers, \
+                                TransferLearningFreezeThenThaw
 import numpy as np
 
 class PPO(Controller):
     """
     The proximal policy optimization (PPO) algorithm is based on the paper
     "Proximal Policy Optimization Algorithms" by Schulman et al.
-
-
     """
     def __init__(self, device='cpu'):
         super(PPO, self).__init__()
@@ -24,18 +22,20 @@ class PPO(Controller):
                      optimizer_type='adam', transfer_learning=None, total_frames=1e6,
                      tl_start = 0.1, tl_end=0.3):
 
-        self.model = FeedForwardPPO(n_features, n_actions, hidden_layers,
-                                    self.device, action_std)
+        # Initialize actor and critic model
+        self.model = FeedForwardActorCritic(n_features, n_actions, hidden_layers,
+                                            self.device)
         self.model.to(self.device)
 
-        self.train_steps = train_steps  # Initialize number of training steps to 0
+        # Copy input parameters to class object
+        self.train_steps = train_steps
         self.gamma = gamma
         self.learning_rate = learning_rate
         self.eps = eps
         self.action_std = action_std
         self.batch_size = batch_size
 
-        # Optimizer to be used
+        # Initialize optimizer
         if optimizer_type == 'adagrad':
             self.optimizer = torch.optim.Adagrad(self.model.parameters(), lr=learning_rate)
         elif optimizer_type == 'adam':
@@ -47,18 +47,19 @@ class PPO(Controller):
         else:
             raise Exception('Unrecognized optimizer')
 
+        # Initialize transfer learning function, if applicable
         if transfer_learning == 'initialize' or transfer_learning == 'none':
             self.transfer_learning = TransferLearningInitializeOnly(optim = self.optimizer,
                                                                     models = [self.model.actor, self.model.critic],
                                                                     total_frames = total_frames)
         elif transfer_learning == 'freeze_all_but_final':
-            self.transfer_learning = TransferLearningFreezeNLayers(optim=self.optimizer,
-                                                                    models=[self.model.actor, self.model.critic],
-                                                                    total_frames=total_frames)
+            self.transfer_learning = TransferLearningFreezeAllButNLayers(optim=self.optimizer,
+                                                                         models=[self.model.actor, self.model.critic],
+                                                                         total_frames=total_frames)
         elif transfer_learning == 'freeze_then_thaw':
-            self.transfer_learning = TransferLearningFreezeNLayersFullThaw(optim=self.optimizer,
-                                                               models=[self.model.actor, self.model.critic],
-                                                               tl_end=tl_end, total_frames=total_frames)
+            self.transfer_learning = TransferLearningFreezeThenThaw(optim=self.optimizer,
+                                                                    models=[self.model.actor, self.model.critic],
+                                                                    tl_end=tl_end, total_frames=total_frames)
         else:
             raise Exception('Unrecognized transfer learning')
 
@@ -70,7 +71,7 @@ class PPO(Controller):
 
     def sample_action(self, state):
         """
-
+        Sample the noisy action space of the actor model.
         """
         with torch.no_grad():
             actions, logp = self.model.sample_action(state, self.action_std)
@@ -78,19 +79,22 @@ class PPO(Controller):
         return actions, logp
 
     def check_train(self, mem, frames):
-        if len(mem) >= self.batch_size:
-            self.transfer_learning.update_learning_rates(frames)
-            self.train(mem)
-            mem.reset()
-            """ Debugging
-            w = []
-            for i in range(len(self.model.actor)):
-                if hasattr(self.model.actor[i], 'weight'):
-                    w.append(float(self.model.actor[i].weight.sum().detach()))
-                    w.append(float(self.model.actor[i].bias.sum().detach()))
-            print(w)
-            """
+        """
+        Check if the model is ready to be trained, and if so call the PPO training function
+        """
 
+        # Train if memory buffer has reached sufficient size
+        if len(mem) >= self.batch_size:
+            # Let transfer learning function update optimizer, if necessary
+            self.transfer_learning.update_learning_rates(frames)
+
+            # Train using PPO algorithm
+            self.train(mem)
+
+            # Clear memory buffer after training
+            mem.reset()
+
+        # Update noise applied to action space, if adaptive nois is used
         self.update_action_std(frames)
 
     def train(self, mem):
@@ -101,6 +105,7 @@ class PPO(Controller):
         https://github.com/nikhilbarhate99/PPO-PyTorch/blob/master/PPO_continuous.py
         """
 
+        # Get all memories from buffer
         batch_actions, batch_states, batch_logp, batch_rewards, batch_dones, _ = mem.get_all()
 
         # Calculate discounted rewards from memory
@@ -119,7 +124,7 @@ class PPO(Controller):
         batch_logp = torch.squeeze(torch.stack(batch_logp).to(self.device)).detach()
         batch_states = torch.squeeze(torch.stack(batch_states).to(self.device)).detach()
 
-        # Train model for the a defined myber of steps.
+        # Train model for the a defined number of steps.
         self.model.train()
         for _ in range(self.train_steps):
 

@@ -3,6 +3,10 @@ This environment is modified from the box2d/bipedal_walker environment created b
 and provided in the OpenAI gym.
 
 https://github.com/openai/gym/edit/master/gym/envs/box2d/bipedal_walker.py
+
+The environment has been modified such that:
+- The robot leg length can be customized and is supplied as an input argument to the environment __init__ function
+- The penalty for falling is also supplied as an input to the __init__ function.
 """
 
 import sys
@@ -69,32 +73,6 @@ TERRAIN_HEIGHT = VIEWPORT_H/SCALE/4
 TERRAIN_GRASS    = 10    # low long are grass spots, in steps
 TERRAIN_STARTPAD = 20    # in steps
 FRICTION = 2.5
-
-"""
-LEG_W, LEG_H = 8/SCALE, 34/SCALE
-HULL_FD = fixtureDef(
-                shape=polygonShape(vertices=[ (x/SCALE,y/SCALE) for x,y in HULL_POLY ]),
-                density=5.0,
-                friction=0.1,
-                categoryBits=0x0020,
-                maskBits=0x001,  # collide only with ground
-                restitution=0.0) # 0.99 bouncy
-
-LEG_FD = fixtureDef(
-                    shape=polygonShape(box=(LEG_W/2, LEG_H/2)),
-                    density=1.0,
-                    restitution=0.0,
-                    categoryBits=0x0020,
-                    maskBits=0x001)
-
-LOWER_FD = fixtureDef(
-                    shape=polygonShape(box=(0.8*LEG_W/2, LEG_H/2)),
-                    density=1.0,
-                    restitution=0.0,
-                    categoryBits=0x0020,
-                    maskBits=0x001)
-                    
-"""
 
 class ContactDetector(contactListener):
     def __init__(self, env):

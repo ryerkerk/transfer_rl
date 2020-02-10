@@ -1,6 +1,6 @@
 class TransferLearner():
     """
-    Parent class for transfer learning models
+    Parent class for transfer learning models.
 
     """
     def __init__(self, optim=None, models=None, total_frames=None, **kwargs):
