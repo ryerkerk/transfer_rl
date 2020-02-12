@@ -79,12 +79,17 @@ def parse_arg():
                         help="Type of transfer learning, if applicable")
     parser.add_argument("--tl_end", type=float, default=0.25,
                         help="Parameter for certain types of transfer learning")
-    parser.add_argument("--reset_final_layer", type=check_bool, default=False,
-                        help="Reinitialize final layer of weights, only applies if initial model is specified")
+    parser.add_argument("--reset_final_layer", type=str, default='none',
+                        choices=['both', 'actor', 'critic', 'none'],
+                        help="Reinitialize final layer of weights for these models, only applies if initial model is specified")
     parser.add_argument("--add_noise_layers", type=int, default=0,
                         help="Add noise to this many layers, only applies if initial model is specified")
+    parser.add_argument("--models_to_add_noise", type=str, default='both',
+                        choices=['both', 'actor', 'critic'],
+                        help="Models to add noise to")
     parser.add_argument("--add_noise_alpha", type=float, default=1,
                         help="Amount of noise added is this value multiplied by standard deviation of noise in each layer")
+
 
 
     params = vars(parser.parse_args())

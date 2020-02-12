@@ -22,13 +22,12 @@ if __name__ == "__main__":
     if params['initial_model'] != 'none':
         print("Loading {}".format('./trained_models/{}.pt'.format(params['initial_model'])))
         model.load_model('./trained_models/{}.pt'.format(params['initial_model']), params['models_to_load'])
-        if params['reset_final_layer']:
-            print('Resetting final layer')
-            model.reset_final_layer()
+        if params['reset_final_layer'] is not None:
+            model.reset_final_layer(params['reset_final_layer'])
 
         if params['add_noise_layers'] >= 1:
-            print("Adding noise to layers")
-            model.add_noise_layers(n=params['add_noise_layers'], alpha=params['add_noise_alpha'])
+            model.add_noise_layers(n=params['add_noise_layers'], alpha=params['add_noise_alpha'],
+                                   model_type=params['models_to_add_noise'])
 
 
     total_steps = 0

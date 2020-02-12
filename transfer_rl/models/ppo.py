@@ -158,12 +158,17 @@ class PPO(Controller):
             loss.mean().backward()
             self.optimizer.step()
 
-    def reset_final_layer(self):
+    def reset_final_layer(self, model_type='both'):
         """
         Reinitializes the weights for the final layer of the actor and model networks to random values.
         """
-
-        models = [self.model.actor, self.model.critic]
+        models = []
+        if model_type in ['both', 'actor']:
+            print("Resetting final layer of actor")
+            models.append(self.model.actor)
+        if model_type in ['both', 'critic']:
+            print("Resetting final layer of critic")
+            models.append(self.model.critic)
 
         for i in range(len(models)):
             layer_count = 0
@@ -180,14 +185,21 @@ class PPO(Controller):
                         if cur_layer.bias is not None:
                             cur_layer.bias.data.uniform_(-stdv, stdv)
 
-    def add_noise_layers(self, n, alpha=1):
+    def add_noise_layers(self, n, model_type, alpha=1):
         """
         Add noise to the final n layers of both the actor and critic networks.
 
         :param n: Number of layers to add noise to, counting from final layer
         :param alpha: Noise added is alpha*std(layer weights)
         """
-        models = [self.model.actor, self.model.critic]
+
+        models = []
+        if model_type in ['both', 'actor']:
+            print("Adding noise to final {} layers of actor".format(n))
+            models.append(self.model.actor)
+        if model_type in ['both', 'critic']:
+            print("Adding noise to final {} layers of critic".format(n))
+            models.append(self.model.critic)
 
         for i in range(len(models)):
             layer_count = 0
