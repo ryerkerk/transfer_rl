@@ -71,6 +71,9 @@ def parse_arg():
     # Transfer learning parameters
     parser.add_argument("--initial_model", type=str, default='none',
                         help="Model to load and initialize new model through transfer learning. Model must be present in ./trained_models/")
+    parser.add_argument("--models_to_load", type=str, default='both',
+                        choices=['both','actor','critic'],
+                        help="Specify whether to load the actor, critic, or both")
     parser.add_argument("--transfer_learning", type=str, default="none",
                         choices=['none', 'initialize', 'freeze_all_but_first', 'freeze_then_thaw'],
                         help="Type of transfer learning, if applicable")

@@ -205,8 +205,21 @@ class PPO(Controller):
         """
         torch.save(self.model.state_dict(), path)
 
-    def load_model(self, path):
+    def load_model(self, path, load_type='both'):
         """
-        Load the policy net model from the given path
+        Load the policy net model from the given path. This will load only the actor or critic model, or
+        both, depending on the load type specified
         """
-        self.model.load_state_dict(torch.load(path))
+        pretrained_model = torch.load(path)
+
+        # Import actor parameters if desired
+        if load_type in ['both', 'actor']:
+            print("Loading actor parameters")
+            weights = {k.split('.', 1)[1]: v for k, v in pretrained_model.items() if 'actor' in k}
+            self.model.actor.load_state_dict(weights)
+
+        # Import critic parameters if desired
+        if load_type in ['both', 'critic']:
+            print("Loading critic parameters")
+            weights = {k.split('.', 1)[1]: v for k, v in pretrained_model.items() if 'critic' in k}
+            self.model.critic.load_state_dict(weights)
