@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     if params['initial_model'] != 'none':
         print("Loading {}".format('./trained_models/{}.pt'.format(params['initial_model'])))
-        model.load_model('./trained_models/{}.pt'.format(params['initial_model']))
+        model.load_model('./trained_models/{}.pt'.format(params['initial_model']), params['models_to_load'])
         if params['reset_final_layer']:
             print('Resetting final layer')
             model.reset_final_layer()
