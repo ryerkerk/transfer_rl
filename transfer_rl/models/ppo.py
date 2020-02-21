@@ -19,7 +19,7 @@ class PPO(Controller):
 
     def create_model(self, n_features, n_actions, hidden_layers=[10, 10, 10], action_std=0.1,
                      gamma=0.99, eps=0.2, learning_rate=1e-4, train_steps=80, batch_size=10000,
-                     optimizer_type='adam', transfer_learning=None, total_frames=1e6,
+                     optimizer_type='adam', transfer_learning="none", total_frames=1e6,
                      tl_start = 0.1, tl_end=0.3):
 
         # Initialize actor and critic model
